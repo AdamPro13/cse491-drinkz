@@ -46,12 +46,32 @@ def check_inventory(mfg, liquor):
 
 def get_liquor_amount(mfg, liquor):
     "Retrieve the total amount of any given liquor currently in inventory."
+    
+    #conversion rate: ml to Fl Oz
+    ozToMl =  29.5735296
+    
     amounts = []
     for (m, l, amount) in _inventory_db:
         if mfg == m and liquor == l:
             amounts.append(amount)
-
-    return amounts[0]
+    
+    total = 0
+    for amount in amounts:
+        if 'ml' in amount:
+            #get rid of extra spaces
+            amount = amount.strip()
+            amount = amount.strip('ml')
+            amount = float(amount)
+        elif 'oz' in amount:
+            amount = amount.strip()
+            amount = amount.strip('oz')
+            amount = float(amount)
+            amount = amount * ozToMl
+            
+        total += amount
+        
+    #it's int because we don't care about fractions of milileters
+    return str(int(total)) + ' ml'
 
 def get_liquor_inventory():
     "Retrieve all liquor types in inventory, in tuple form: (mfg, liquor)."
