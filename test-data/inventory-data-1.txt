@@ -1,9 +1,4 @@
-# testing comments with loading inventory
-Booze,booze1,1000 ml
-#1
-Booze, booze1,6000 ml
-Johnnie Walker,Black Label,50 oz
-#2
-a,b,1500 ml
-#3
-#4
+# this file has, at the end, a blank line, which should be handled
+# (ignored!) by our loading script - just like these comments.
+Johnnie Walker,Black Label,1234 ml
+
