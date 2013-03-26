@@ -27,10 +27,17 @@ def _reset_db():
 # override any methods.
 class LiquorMissing(Exception):
     pass
+    
+class DuplicateRecipeName(Exception):
+    pass
 
 
 def add_recipe(r):
     "add a recipe to the database"
+    
+    if r.name in _recipes_db.keys():
+        err = "Repeated recipe"
+        raise DuplicateRecipeName(err)
     _recipes_db[r.name] = r
     
 def get_all_recipes():

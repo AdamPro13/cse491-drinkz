@@ -39,6 +39,13 @@ except OSError:
 
 ###INDEX
 fp = open('html/index.html', 'w')
+
+index_text = """"<b>L00K 4T My Aw3s0m3 Dr1nKz!1!1!</b>
+<p><a href='recipes.html'>My Recipes</a>
+<p><a href='recipes.html'>My Recipes</a>
+<p><a href='inventory.html'>My Inventory</a>
+<p><a href='liquor_types.html'>My Liquor Typez</a>"""
+
 print >>fp, """"<b>L00K 4T My Aw3s0m3 Dr1nKz!1!1!</b>
 <p><a href='recipes.html'>My Recipes</a>"""
 

@@ -78,4 +78,4 @@ def test_bulk_load_bottle_types_badformat():
 
     assert db._check_bottle_type_exists('Johnnie Walker', 'Black Label')
     assert n == 1, n
->>>>>>> 3a62d5c94b0ca53b2f87ea9ed3ef8b7d1887583e
+

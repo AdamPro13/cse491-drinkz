@@ -31,6 +31,8 @@ def data_reader(fp):
             continue
         elif line[0].startswith('#'):
             continue
+        elif len(line) != 3:
+            continue
             
         (item1, item2, item3) = line
         

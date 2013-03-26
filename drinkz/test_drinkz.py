@@ -20,7 +20,7 @@ def test_foo():
 
 def test_add_bottle_type_1():
     print 'Note that output from failing tests is printed out!'
-    
+                
     db._reset_db()
 
     db.add_bottle_type('Johnnie Walker', 'Black Label', 'blended scotch')
