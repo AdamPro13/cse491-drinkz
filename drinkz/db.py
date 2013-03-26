@@ -108,7 +108,13 @@ def convert_to_ml(amount):
     
     amount = amount.strip()
     amount = amount.split(' ')
-    unit = amount[1]
+    
+    if len(amount) == 2:
+        unit = amount[1]
+    else:
+        unit = 'ml'
+
+    print amount
     amount = amount[0]
     
     if 'ml' in unit:
@@ -119,6 +125,10 @@ def convert_to_ml(amount):
         amount = float(amount) * galToML
     elif 'liter' in unit:
         amount = float(amount) * literToML
+    elif unit == '':
+        amount = float(amount)
+    else:
+        amount = float(amount)
 
     
     
