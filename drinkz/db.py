@@ -6,15 +6,17 @@ access a recipe by name. In a set, it would be a tad rough, methinks.
 
 A list is a laughable idea. 
 """
-
+from recipes import Recipe
+import recipes
 from cPickle import dump, load
+
 
 # private singleton variables at module level
 _inventory_db = {}
 _bottle_types_db = set()
 _recipes_db = {}
 
-from recipes import Recipe
+
 
 
 
@@ -28,17 +30,17 @@ def _reset_db():
 def save_db(filename):
     fp = open(filename, 'wb')
 
-    tosave = (_bottle_types_db, _inventory_db)
+    tosave = (_bottle_types_db, _inventory_db, _recipes_db)
     dump(tosave, fp)
 
     fp.close()
 
 def load_db(filename):
-    global _bottle_types_db, _inventory_db
+    global _bottle_types_db, _inventory_db, _recipes_db
     fp = open(filename, 'rb')
 
     loaded = load(fp)
-    (_bottle_types_db, _inventory_db) = loaded
+    (_bottle_types_db, _inventory_db, _recipes_db) = loaded
 
     fp.close()
 
@@ -133,7 +135,6 @@ def convert_to_ml(amount):
     else:
         unit = 'ml'
 
-    print amount
     amount = amount[0]
     
     if 'ml' in unit:
@@ -147,7 +148,7 @@ def convert_to_ml(amount):
     elif unit == '':
         amount = float(amount)
     else:
-        amount = float(amount)
+        amount = -1
 
     
     

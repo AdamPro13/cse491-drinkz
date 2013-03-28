@@ -25,9 +25,11 @@ def fill_stuff():
 	r = recipes.Recipe('vomit inducing martini', [('orange juice','6 oz'),('vermouth','1.5 oz')])
 	db.add_recipe(r)
 
-fill_stuff()
+#not needed now that db is filled
+#fill_stuff()
 
 def test_index():
+	
 	environ = {}
 	environ['PATH_INFO'] = '/'
 	
@@ -47,6 +49,7 @@ def test_index():
 	assert status == '200 OK'
 	
 def test_recipes():
+	db.load_db('db')
 	environ = {}
 	environ['PATH_INFO'] = '/recipes'
 	
@@ -66,6 +69,7 @@ def test_recipes():
 	assert status == '200 OK'
 	
 def test_inventory():
+	db.load_db('db')
 	environ = {}
 	environ['PATH_INFO'] = '/inventory'
 	
@@ -85,6 +89,7 @@ def test_inventory():
 	assert status == '200 OK'
 
 def test_types():
+	db.load_db('db')
 	environ = {}
 	environ['PATH_INFO'] = '/liquor-types'
 

@@ -4,6 +4,11 @@ import urlparse
 import simplejson
 import html_constructor
 import db
+import recipes
+from recipes import Recipe as Recipe
+
+
+
 
 dispatch = {
     '/' : 'index',
@@ -22,13 +27,13 @@ class SimpleApp(object):
 
         path = environ['PATH_INFO']
         fn_name = dispatch.get(path, 'error')
-        print path
+        
 
         # retrieve 'self.fn_name' where 'fn_name' is the
         # value in the 'dispatch' dictionary corresponding to
         # the 'path'.
         fn = getattr(self, fn_name, None)
-
+        
         if fn is None:
             start_response("404 Not Found", html_headers)
             return ["No path %s found" % path]
@@ -81,7 +86,7 @@ class SimpleApp(object):
 
     def form(self, environ, start_response):
         content_type = 'text/html'
-        data = form()
+        data = html_constructor.construct_converter_form()
         
         start_response('200 OK', list(html_headers))
         return [data]
@@ -95,7 +100,10 @@ class SimpleApp(object):
         amount = str(db.convert_to_ml(amount))
 
         content_type = 'text/html'
-        data = "Amount: %s ml <p><a href='./'>Homeward Bound</a>" % (amount)
+        if amount == '-1':
+            data = "What the hell is a %s? <p><a href='./'>Homeward Bound</a>" % (results['Amount'][0].split()[1])
+        else:
+            data = "Amount: %s ml <p><a href='./'>Homeward Bound</a>" % (amount)
 
         start_response('200 OK', list(html_headers))
         return [data]
@@ -110,11 +118,12 @@ class SimpleApp(object):
             if environ.get('CONTENT_LENGTH'):
                 length = int(environ['CONTENT_LENGTH'])
                 body = environ['wsgi.input'].read(length)
+
                 response = self._dispatch(body) + '\n'
                 start_response('200 OK', [('Content-Type', 'application/json')])
 
                 return [response]
-
+                
         # default to a non JSON-RPC error.
         status = "404 Not Found"
         content_type = 'text/html'
@@ -145,20 +154,43 @@ class SimpleApp(object):
 
     def rpc_add(self, a, b):
         return int(a) + int(b)
+        
+    def rpc_convert_units_to_ml(self, amount):
+        """given a str amount, returns ml"""
+        
+        return db.convert_to_ml(amount)
+        
+
+    def rpc_get_recipe_names(self):
+       """get_recipe_names() - returns a list of all recipe names"""
+       recipes = db.get_all_recipes()
+       result = []
+       for recipe in recipes:
+           print recipe
+           result.append(str(recipe))
+           
+       return result
+       
+    def rpc_get_liquor_inventory(self):
+       """ returns a list of (mfg, liquor) tuples."""
+       
+       result = []
+       
+       for (m, l) in db.get_liquor_inventory():
+           result.append((m,l))
+
+       return result
+       
+    def rpc_load_data(self):
+        db.load_db('/db')
     
-def form():
-    return """
-<form action='recv'>
-Give an amount <input type='text' name='Amount' size'20'>
-<input type='submit'>
-</form>
-"""
 
 if __name__ == '__main__':
     import random, socket
     port = random.randint(8000, 9999)
-    
+
     app = SimpleApp()
+    app.load_data()
     
     httpd = make_server('', port, app)
     print "Serving on port %d..." % port
