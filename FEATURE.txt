@@ -10,10 +10,6 @@ Web interface-
 
 Currently I am thinking having a table for artist and song name and allowing the user to alphabetize the playlist by song name or artist. This could definitely be simplified to a straight list if I don't allow the sorting functionality. Two forms for artist and song name will suffice in submission of the playlist.
 
-Bonus Functionality(for sauciness)
+Feature for HW#6-
 
-Search by artist, song.
-
-Remove Song/Artist(host only)
-
-Genre's
+Currently we have a list of all the types of alcohol. I want to allow the user to input a rating/demand for an alcohol that is entered and create a page that lists the favorite alcohols in order. I can also display the current amount of the alcohol that is in the database. This way, someone coming to the party can see what people would most like them to bring, as well as how much is on hand. 
