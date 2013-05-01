@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <script src="/jquery.js"></script>
+    <title>Convert to mL</title>
+  </head>
+  <body>
+    <p>
+      Amount to convert to mL: <input type="text" id="amount" size="7">
+    </p>
+    <p>Supports units oz, gallon, and liter. Don't forget a space between the number and the unit.</p>
+    <p>Example input: '20 gallon'</p>
+    <p id="result"></p>
+
+    <script>
+      (function() {
+        var updateResult;
+
+        updateResult = function(before, after) {
+          $('#result').html(before + " = <strong>" + after + " mL<\/strong>");
+        };
+
+        $('#amount').change(function () {
+          var amount;
+
+          amount = $(this).val();
+          $.ajax({
+            url: '/rpc',
+            type: 'POST',
+            dataType: 'json',
+            data: JSON.stringify({ method: 'convert_units_to_ml', params: [amount], id: '0' }),
+            success: function (data) { updateResult(amount, data.result); },
+            error: function () { alert('Error retrieving result from server!'); }
+          });
+        });
+      }());
+    </script>
+  </body>
+</html>

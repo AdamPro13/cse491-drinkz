@@ -1,2 +1,8 @@
 *.pyc
 *~
+*.DS_Store
+bin/load-databasec
+bin/load-liquor-inventoryc
+bin/load-liquor-typesc
+bin/make-test-databasec
+bin/run-webc

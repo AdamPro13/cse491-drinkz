@@ -6,73 +6,97 @@ access a recipe by name. In a set, it would be a tad rough, methinks.
 
 A list is a laughable idea. 
 """
-from recipes import Recipe
-import recipes
-from cPickle import dump, load
 
+from sqlalchemy import *
+import simplejson
+
+from recipes import Recipe
 
 # private singleton variables at module level
 _inventory_db = {}
 _bottle_types_db = set()
-_recipes_db = {}
+_recipes_db = set()
 
+def setup_tables(filename):
+    engine = create_engine("sqlite:///%s" % filename)
+    meta = MetaData(engine)
+    bottle_types = Table('bottle_types', meta,
+            Column('id', Integer, primary_key=True),
+            Column('mfg', Text),
+            Column('liquor', Text),
+            Column('type', Text))
+    inventory = Table('inventory', meta,
+            Column('id', Integer, primary_key=True),
+            Column('mfg', Text),
+            Column('liquor', Text),
+            Column('amount', Float))
+    recipes = Table('recipes', meta,
+            Column('id', Integer, primary_key=True),
+            Column('name', Text),
+            Column('ingredients', Text))
 
-
-
+    return (bottle_types, inventory, recipes)
 
 def _reset_db():
     "A method only to be used during testing -- toss the existing db info."
     global _bottle_types_db, _inventory_db, _recipes_db
     _bottle_types_db = set()
     _inventory_db = {}
-    _recipes_db = {}
+    _recipes_db = set()
 
 def save_db(filename):
-    fp = open(filename, 'wb')
+    bottle_types, inventory, recipes = setup_tables(filename)
 
-    tosave = (_bottle_types_db, _inventory_db, _recipes_db)
-    dump(tosave, fp)
+    bottle_types.drop(checkfirst=True)
+    inventory.drop(checkfirst=True)
+    recipes.drop(checkfirst=True)
 
-    fp.close()
+    bottle_types.create()
+    inventory.create()
+    recipes.create()
+
+    i = bottle_types.insert()
+    for (m, l, t) in _bottle_types_db:
+        i.execute(mfg=m, liquor=l, type=t)
+
+    i = inventory.insert()
+    for (m, l) in _inventory_db:
+        a = _inventory_db[(m, l)]
+        i.execute(mfg=m, liquor=l, amount=a)
+
+    i = recipes.insert()
+    for r in _recipes_db:
+        i.execute(name=r._recipeName, ingredients=simplejson.dumps(list(r._myIngredients)))
 
 def load_db(filename):
     global _bottle_types_db, _inventory_db, _recipes_db
-    fp = open(filename, 'rb')
+    bottle_types, inventory, recipes = setup_tables(filename)
 
-    loaded = load(fp)
-    (_bottle_types_db, _inventory_db, _recipes_db) = loaded
+    s = bottle_types.select()
+    rows = s.execute()
+    for row in rows:
+        add_bottle_type(row.mfg, row.liquor, row.type)
 
-    fp.close()
+    s = inventory.select()
+    rows = s.execute()
+    for row in rows:
+        add_to_inventory(row.mfg, row.liquor, "%s ml" % str(row.amount))
+
+    s = recipes.select()
+    rows = s.execute()
+    for row in rows:
+        ingr = []
+        for i in simplejson.loads(row.ingredients):
+            ingr.append(tuple(i))
+        r = Recipe(row.name, set(ingr))
+        add_recipe(r)
 
 # exceptions in Python inherit from Exception and generally don't need to
 # override any methods.
 class LiquorMissing(Exception):
     pass
-    
 class DuplicateRecipeName(Exception):
     pass
-
-
-def add_recipe(r):
-    "add a recipe to the database"
-    
-    if r.name in _recipes_db.keys():
-        err = "Repeated recipe"
-        raise DuplicateRecipeName(err)
-    _recipes_db[r.name] = r
-    
-def get_all_recipes():
-    "return all dem recipes"
-    return _recipes_db.values()
-    
-def get_recipe(name):
-    "gets a recipe (if it exists)"
-    
-    if name in _recipes_db:
-        return _recipes_db[name]
-    else:
-        return False
-    
 def add_bottle_type(mfg, liquor, typ):
     "Add the given bottle type into the drinkz database."
     _bottle_types_db.add((mfg, liquor, typ))
@@ -84,92 +108,77 @@ def _check_bottle_type_exists(mfg, liquor):
 
     return False
 
-def check_inventory_for_type(typ):
-    "checks for a generic type and returns a list of mfg/liquor touples"
-    
-    available = []
-    
-    for (m, l, t) in _bottle_types_db:
-        if t == typ:
-            available.append((m,l))
-    
-    return available
-            
-
 def add_to_inventory(mfg, liquor, amount):
     "Add the given liquor/amount to inventory."
     if not _check_bottle_type_exists(mfg, liquor):
         err = "Missing liquor: manufacturer '%s', name '%s'" % (mfg, liquor)
         raise LiquorMissing(err)
-    
-    addThis = (mfg, liquor)
-
-    # just add it to the inventory database as a tuple, for now.
-    if addThis in _inventory_db:
-        _inventory_db[addThis].append(amount)
+    total = convert_to_ml(amount)
+        
+    if (mfg,liquor) in _inventory_db:
+        _inventory_db[(mfg, liquor)] += total
     else:
-        _inventory_db[addThis] = []
-        _inventory_db[addThis].append(amount)
+        _inventory_db[(mfg, liquor)] = total
 
 def check_inventory(mfg, liquor):
-    for (m, l) in _inventory_db.keys():
+    for (m, l) in _inventory_db:
         if mfg == m and liquor == l:
             return True
         
     return False
-    
-def convert_to_ml(amount):
-    "takes in a string amount and returns a float"
-    
-    #conversion rates
-    #more could be added...
-    ozToMl =  29.5735296
-    galToML = 3785.41
-    literToML = 1000.0
-    
-    amount = amount.strip()
-    amount = amount.split(' ')
-    
-    if len(amount) == 2:
-        unit = amount[1]
-    else:
-        unit = 'ml'
-
-    amount = amount[0]
-    
-    if 'ml' in unit:
-        amount = float(amount)
-    elif 'oz' in unit:
-        amount = float(amount) * ozToMl
-    elif 'gallon' in unit:
-        amount = float(amount) * galToML
-    elif 'liter' in unit:
-        amount = float(amount) * literToML
-    elif unit == '':
-        amount = float(amount)
-    else:
-        amount = -1
-
-    
-    
-    return amount
-
 
 def get_liquor_amount(mfg, liquor):
     "Retrieve the total amount of any given liquor currently in inventory."
-
-    amounts = _inventory_db[(mfg, liquor)]
-
     total = 0
-    
-    for amount in amounts:
-        amount = convert_to_ml(amount)  
-        total += amount
-        
+    for (m, l) in _inventory_db:
+        if mfg == m and liquor == l:
+            total = float(str(_inventory_db[(m,l)]))
 
-    return total
+    return float("%.2f" % total)
 
 def get_liquor_inventory():
     "Retrieve all liquor types in inventory, in tuple form: (mfg, liquor)."
-    for (m, l) in _inventory_db.keys():
+    for (m, l) in _inventory_db:
         yield m, l
+
+def get_liquor_types():
+    "Retrieve all liquor types in inventory, in tuple form: (mfg, liquor)."
+    for (m, l,_) in _bottle_types_db:
+        yield m, l
+
+def add_recipe(r):
+    for recipe in _recipes_db:
+        if recipe._recipeName == r._recipeName:
+            raise DuplicateRecipeName
+    _recipes_db.add(r)
+    
+def get_recipe(name):
+    for recipe in _recipes_db:
+        if name == recipe._recipeName:            
+            return recipe
+    return 0
+
+def get_all_recipes():
+    return _recipes_db
+
+def check_inventory_for_type(typ):
+    myList = list()
+    
+    for (m, l, t) in _bottle_types_db:
+
+        if(typ == t or typ == l): #checks for generic or label
+            myList.append((m,l))
+    return myList
+
+def convert_to_ml(amount):
+    amounts = amount.split(" ")
+    total = 0
+    if amounts[1] == "oz":
+        total += float(amounts[0])*29.5735
+    elif amounts[1] == "ml" or amounts[1] == "mL":
+        total += float(amounts[0])
+    elif amounts[1] == "liter":
+        total += float(amounts[0])*1000.0
+    elif amounts[1] == "gallon":
+        total += float(amounts[0])*3785.41178
+    return total

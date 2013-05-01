@@ -7,41 +7,11 @@ Module to load in bulk data from text files.
 #   import drinkz.load_bulk_data
 #   help(drinkz.load_bulk_data)
 #
-
+import yaml
 import csv                              # Python csv package
-
 from . import db                        # import from local package
-
-def data_reader(fp):
-    """
-    Generic Generator (I call him Jerry) for loading bulk data into our
-    drinkz database.
-    
-    Takes a file pointer
-    
-    iterates through csv file
-    
-    yields 3 item touple of data to be used by the calling function
-    """
-    
-    reader = csv.reader(fp)
-    
-    for line in reader:
-        if not ''.join(line).strip():
-            continue
-        elif line[0].startswith('#'):
-            continue
-        elif len(line) != 3:
-            continue
-            
-        (item1, item2, item3) = line
-        
-        item1 = item1.strip()
-        item2 = item2.strip()
-        item3 = item3.strip()
-            
-        yield (item1, item2, item3)
-        
+from . import recipes
+import pprint
 
 def load_bottle_types(fp):
     """
@@ -53,18 +23,22 @@ def load_bottle_types(fp):
 
     Returns number of bottle types loaded
     """
-    
     reader = data_reader(fp)
+
+    x = []
     n = 0
-    for mfg, name, typ in reader:
+    for line in reader:
+        try:        
+           (mfg, name, typ) = line
+        except:
+            print "Line formatted incorrectly"
+            continue
+           
+        n += 1
         try:
             db.add_bottle_type(mfg, name, typ)
-            n+=1
-        except db.LiquorMissing:
-            print "Could not add", mfg, name, typ
-            continue
-            
-
+        except:
+            print "Could not add bottle type"
     return n
 
 def load_inventory(fp):
@@ -80,16 +54,58 @@ def load_inventory(fp):
     Note that a LiquorMissing exception is raised if bottle_types_db does
     not contain the manufacturer and liquor name already.
     """
+    reader = data_reader(fp)
 
-    reader = data_reader(fp)  
+    x = []
     n = 0
-    for mfg, name, amount in reader:
-        
+    for line in reader:
+        try:
+            (mfg, name, amount) = line;
+        except:
+            print "Line formatted incorrectly"
+            continue
+        n += 1
         try:
             db.add_to_inventory(mfg, name, amount)
-            n+=1
-        except db.LiquorMissing:
-            print "Could not add", mfg, name, amount
-            continue
-
+        except:
+            print "Could not add to inventory"
     return n
+
+def load_recipes(fp):
+    """
+    Loads in recipe data using yaml
+    r = recipes.Recipe('vomit inducing martini', [('orange juice',
+                                                      '6 oz'),
+                                                     ('vermouth',
+                                                      '1.5 oz')])
+    """
+    n = 0
+    # use safe_load instead load
+    dataMap = yaml.safe_load(fp)
+    recipeDict = dataMap["recipeDict"]
+    for recipeName in recipeDict:
+        ingredients = set()
+        dictOfIngredients = recipeDict[recipeName]
+        for ingredient in dictOfIngredients:
+            myTup = (name,amount) = ingredient, dictOfIngredients[ingredient]
+            ingredients.add(myTup); 
+        try:
+            r = recipes.Recipe(recipeName,ingredients)
+            print ingredients
+            db.add_recipe(r)
+            n+=1
+        except:
+            print "Could not add to inventory"
+    return n
+def data_reader(fp):
+
+    reader = csv.reader(fp)
+
+    for line in reader:
+        if not line:
+            continue
+        if not line[0].strip():
+            continue
+        if line[0].startswith('#'):
+            continue
+        yield line

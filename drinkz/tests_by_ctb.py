@@ -50,7 +50,6 @@ def test_script_load_liquor_inventory():
 
     assert exit_code == 0, 'non zero exit code %s' % exit_code
     amount = db.get_liquor_amount('Johnnie Walker', 'Black Label')
-
     assert amount == 1234
 
 def test_for_properly_named_grab_script():
@@ -78,4 +77,3 @@ def test_bulk_load_bottle_types_badformat():
 
     assert db._check_bottle_type_exists('Johnnie Walker', 'Black Label')
     assert n == 1, n
-

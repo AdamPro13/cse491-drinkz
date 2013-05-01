@@ -1,5 +1,2 @@
 # a simple example of a "good" data file.
-
 Johnnie Walker,Black Label,blended scotch
-Booze, booze1,boozeybooze
-a,b,c

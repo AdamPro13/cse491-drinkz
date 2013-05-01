@@ -44,6 +44,7 @@ class TestBasicRecipeStuff(unittest.TestCase):
         db.add_recipe(r)
 
         x = db.get_recipe('scotch on the rocks')
+
         assert x == r
 
     def test_get_recipe_2(self):
@@ -95,8 +96,9 @@ class TestIngredients(object):
 
     def test_generic_replacement(self):
         r = recipes.Recipe('whiskey bath', [('blended scotch', '2 liter')])
-
+       
         missing = r.need_ingredients()
+        
         assert not missing, missing
 
     def test_generic_replacement_fail(self):

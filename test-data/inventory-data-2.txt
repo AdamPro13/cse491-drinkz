@@ -1,6 +1,0 @@
-#testing blank lines in and around data
-Booze, booze1, boozeybooze
-
-Johnnie Walker,Black Label,blended scotch
-
-a, b, c
