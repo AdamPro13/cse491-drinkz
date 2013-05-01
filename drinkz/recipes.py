@@ -14,7 +14,6 @@ class Recipe(object):
         myList = list()
         for currentIngredient in self._myIngredients:
             listOfMandLTuples = db.check_inventory_for_type(currentIngredient[0])
-
             amountInStock = 0
             for myTuple in listOfMandLTuples:
                 val = db.get_liquor_amount(myTuple[0],myTuple[1])

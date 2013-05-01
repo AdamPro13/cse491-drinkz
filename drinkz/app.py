@@ -70,38 +70,35 @@ class SimpleApp(object):
         if name1=='':
             return self.login1(environ,start_response)
         data = """\
-            <html>
-            <head>
-            <title>Home</title>
-            <style type='text/css'>
-            h1 {color:red;}
-            body {
-            font-size: 17px;
-            }
-            </style>
-            <script>
-            function myFunction()
-            {
-            alert("Hello! I am an alert box!");
-            }
-            </script>
-            </script>
-            <h1>Drinkz Home</h1>
-            Visit:
-            <a href='recipesList'>Recipes</a>,
-            <a href='inventoryList'>Inventory</a>,
-            <a href='liqourTypes'>Liqour Types</a>,
-            <a href='convertToML'>Convert to ml</a>
-            <<<<<<< HEAD
-            =======
-            <a href='logout'>Log Out</a>
-            >>>>>>> 080cb05ac008286a7068f453ce0f590eaceb86dd
-            <p>
-            <input type="button" onclick="myFunction()" value="Show alert box" />
-            </head>
-            <body>
-            
-            """
+<html>
+<head>
+<title>Home</title>
+<style type='text/css'>
+h1 {color:red;}
+body {
+font-size: 17px;
+}
+</style>
+<script>
+function myFunction()
+{
+alert("Hello! I am an alert box!");
+}
+</script>
+</script>
+<h1>Drinkz Home</h1>
+Visit:
+<a href='recipesList'>Recipes</a>,
+<a href='inventoryList'>Inventory</a>,
+<a href='liqourTypes'>Liqour Types</a>,
+<a href='convertToML'>Convert to ml</a>
+<a href='logout'>Log Out</a>
+<p>
+<input type="button" onclick="myFunction()" value="Show alert box" />
+</head>
+<body>
+
+"""
         start_response('200 OK', list(html_headers))
         return [data]
 
@@ -204,7 +201,7 @@ class SimpleApp(object):
         
         start_response('200 OK', list(html_headers))
         return [data]
-    
+
     def formConvertToML(self, environ, start_response):
         content_type = 'text/html'
         data = open('../drinkz/somefile.html').read()
@@ -448,11 +445,11 @@ def inventoryList():
     
     vars = dict(title = 'Inventory List', addtitle = "Add to Inventory",
                 form = """<form action='addInventory'>
-                    Manufacturer<input type='text' name='mfg' size'20'>
-                    Liquor<input type='text' name='liquor' size'20'>
-                    Amount<input type='text' name='amt' size'20'><p>
-                    <input type='submit'>
-                    </form>""", names=inventoryList)
+Manufacturer<input type='text' name='mfg' size'20'>
+Liquor<input type='text' name='liquor' size'20'>
+Amount<input type='text' name='amt' size'20'><p>
+<input type='submit'>
+</form>""", names=inventoryList)
     
     template = env.get_template(filename)
     
@@ -478,13 +475,12 @@ def liqourTypesList():
     
     vars = dict(title = 'Liquor Types List', addtitle = "Add Liquor Type",
                 form = """<form action='addType'>
-                    Manufacturer<input type='text' name='mfg' size'20'>
-                    Liquor<input type='text' name='liquor' size'20'>
-                    Generic Type<input type='text' name='typ' size'20'><p>
-                    <input type='submit'>
-                    </form>""", names=liqourTypesList)
-    
-    
+Manufacturer<input type='text' name='mfg' size'20'>
+Liquor<input type='text' name='liquor' size'20'>
+Generic Type<input type='text' name='typ' size'20'><p>
+<input type='submit'>
+</form>""", names=liqourTypesList)
+
     template = env.get_template(filename)
     
     x = template.render(vars).encode('ascii','ignore')    

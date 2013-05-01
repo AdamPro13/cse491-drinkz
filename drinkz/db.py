@@ -46,7 +46,6 @@ def _reset_db():
 
 def save_db(filename):
     bottle_types, inventory, recipes = setup_tables(filename)
-
     bottle_types.drop(checkfirst=True)
     inventory.drop(checkfirst=True)
     recipes.drop(checkfirst=True)
@@ -169,6 +168,7 @@ def check_inventory_for_type(typ):
         if(typ == t or typ == l): #checks for generic or label
             myList.append((m,l))
     return myList
+
 
 def convert_to_ml(amount):
     amounts = amount.split(" ")

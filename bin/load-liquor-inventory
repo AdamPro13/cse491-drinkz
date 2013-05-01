@@ -3,6 +3,7 @@
 import sys
 
 import _mypath
+
 from drinkz.load_bulk_data import load_inventory
 from drinkz.load_bulk_data import load_bottle_types
 
