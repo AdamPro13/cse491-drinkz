@@ -16,4 +16,3 @@ myArray = []
 for k in dict:
     myArray = k.split(",") 
     print '%s\t%s\t%s' % (myArray[0], myArray[1], dict[k])
-

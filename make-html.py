@@ -27,7 +27,7 @@ except OSError:
 ###
 
 fp = open('html/index.html', 'w')
-print >>fp, "<p><a href='recipes.html'><br/>Recipes</a><p><a href='inventory.html'><br/>Inventory</a> <p><a href='liquor_types.html'><br/>Liquor Types</a>"
+print >>fp, "<p><a href='recipes.html'>Recipes</a><p><a href='inventory.html'>Inventory</a> <p><a href='liquor_types.html'>Liquor Types</a>"
 
 
 

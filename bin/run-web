@@ -1,18 +1,13 @@
-#! /usr/bin/env python
-import sys
-import _mypath
+#!/usr/bin/env python
 
+import sys
+
+import _mypath
 from drinkz.app import setUpWebServer
 
 def main(args):
-   setUpWebServer()
-   return 0
-    
-# run the 'main()' function if this script is run from the command line;
-# this will not execute if the file is imported.
-#
-# pass in command line arguments verbatim, as a list.
+    setUpWebServer()
+    return 0
 
 if __name__ == '__main__':
-   exit_code = main(sys.argv)
-   sys.exit(exit_code)
+    sys.exit(main(sys.argv))

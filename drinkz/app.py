@@ -1,19 +1,25 @@
-#! /usr/bin/env python
-from wsgiref.simple_server import make_server
-from db import save_db, load_db
-import sys
+#!/usr/bin/env python
+
 import urlparse
+import random
+import socket
+import uuid
+from os import path
+
 import simplejson
-import db
-import recipes
-import os.path
-import fileinput
 import jinja2
-import sys
-import unicodedata
+from wsgiref.simple_server import make_server
+from Cookie import SimpleCookie
+
+import db
+from db import load_db
+import recipes
+
+usernames = {}
 
 dispatch = {
-    '/' : 'index',
+    '/' : 'login1',
+    '/index':'index',
     '/recipesList' : 'recipesList',
     '/inventoryList' : 'inventoryList',
     '/liqourTypes' : 'liqourTypes',
@@ -22,9 +28,16 @@ dispatch = {
     '/addType' : 'addType',
     '/addInventory' : 'addInventory',
     '/addRecipe' : 'addRecipe',
-    '/rpc' : 'dispatch_rpc'
+    '/addSong' : 'addSong',
+    '/login_1' : 'login1',
+    '/login1_process' : 'login1_process',
+    '/logout' : 'logout',
+    '/status' : 'status',
+    '/rpc' : 'dispatch_rpc',
+    '/jquery.js': 'jquery'
 }
 
+base_dir = path.realpath(path.dirname(path.realpath(__file__)) + '/../')
 html_headers = [('Content-type', 'text/html')]
 
 class SimpleApp(object):
@@ -46,6 +59,16 @@ class SimpleApp(object):
         return fn(environ, start_response)
             
     def index(self, environ, start_response):
+        name1 = ''
+        name1_key = '*empty*'
+        if 'HTTP_COOKIE' in environ:
+            c = SimpleCookie(environ.get('HTTP_COOKIE', ''))
+            if 'name1' in c:
+                key = c.get('name1').value
+                name1 = usernames.get(key, '')
+                name1_key = key
+        if name1=='':
+            return self.login1(environ,start_response) 
         data = """\
 <html>
 <head>
@@ -69,6 +92,10 @@ Visit:
 <a href='inventoryList'>Inventory</a>,
 <a href='liqourTypes'>Liqour Types</a>,
 <a href='convertToML'>Convert to ml</a>
+<<<<<<< HEAD
+=======
+<a href='logout'>Log Out</a>
+>>>>>>> 080cb05ac008286a7068f453ce0f590eaceb86dd
 <p>
 <input type="button" onclick="myFunction()" value="Show alert box" />
 </head>
@@ -77,7 +104,84 @@ Visit:
 """
         start_response('200 OK', list(html_headers))
         return [data]
-        
+    
+    def login1(self, environ, start_response):
+        name1 = ''
+        name1_key = '*empty*'
+        if 'HTTP_COOKIE' in environ:
+            c = SimpleCookie(environ.get('HTTP_COOKIE', ''))
+            if 'name1' in c:
+                key = c.get('name1').value
+                name1 = usernames.get(key, '')
+                name1_key = key
+        if name1:
+            return self.index(environ,start_response)          
+        else:
+            start_response('200 OK', list(html_headers))
+            title = 'login'
+            loader = jinja2.FileSystemLoader('../drinkz/templates')
+            env = jinja2.Environment(loader=loader)
+            template = env.get_template('login1.html')
+            return str(template.render(locals()))
+
+    def login1_process(self, environ, start_response):
+        formdata = environ['QUERY_STRING']
+        results = urlparse.parse_qs(formdata)
+
+        name = results['name'][0]
+        content_type = 'text/html'
+
+        # authentication would go here -- is this a valid username/password,
+        # for example?
+
+        k = str(uuid.uuid4())
+        usernames[k] = name
+
+        headers = list(html_headers)
+        headers.append(('Location', '/index'))
+        headers.append(('Set-Cookie', 'name1=%s' % k))
+
+        start_response('302 Found', headers)
+        return ["Redirect to /index..."]
+
+    def logout(self, environ, start_response):
+        if 'HTTP_COOKIE' in environ:
+            c = SimpleCookie(environ.get('HTTP_COOKIE', ''))
+            if 'name1' in c:
+                key = c.get('name1').value
+                name1_key = key
+
+                if key in usernames:
+                    del usernames[key]
+                    print 'DELETING'
+
+        pair = ('Set-Cookie',
+                'name1=deleted; Expires=Thu, 01-Jan-1970 00:00:01 GMT;')
+        headers = list(html_headers)
+        headers.append(('Location', '/status'))
+        headers.append(pair)
+
+        start_response('302 Found', headers)
+        return ["Redirect to /status..."]
+    
+    def status(self, environ, start_response):
+        start_response('200 OK', list(html_headers))
+
+        name1 = ''
+        name1_key = '*empty*'
+        if 'HTTP_COOKIE' in environ:
+            c = SimpleCookie(environ.get('HTTP_COOKIE', ''))
+            if 'name1' in c:
+                key = c.get('name1').value
+                name1 = usernames.get(key, '')
+                name1_key = key
+                
+        title = 'login status'
+        loader = jinja2.FileSystemLoader('../drinkz/templates')
+        env = jinja2.Environment(loader=loader)
+        template = env.get_template('status.html')
+        return str(template.render(locals()))
+    
     def recipesList(self, environ, start_response):
         data = recipesList()
         start_response('200 OK', list(html_headers))
@@ -100,10 +204,10 @@ Visit:
        
         start_response('200 OK', list(html_headers))
         return [data]
-
-    
+ 
     def formConvertToML(self, environ, start_response):
-        data = convertToML()
+        content_type = 'text/html'
+        data = open('../drinkz/somefile.html').read()
 
         start_response('200 OK', list(html_headers))
         return [data]
@@ -122,6 +226,11 @@ Visit:
         data = "Converted Amount %s ml<p><a href='./'>return to index</a>" % (amount)
 
         start_response('200 OK', list(html_headers))
+        return [data]
+
+    def jquery(self, environ, start_response):
+        data = open(base_dir + '/js/jquery.js').read()
+        start_response('200 OK', [('Content-Type', 'text/javascript')])
         return [data]
 
     def addType(self, environ, start_response):
@@ -241,6 +350,7 @@ alert("That liquor is not an added type.");
         for (m,l) in db.get_liquor_types():
             liqourTypeList.append((m,l))
         return liqourTypeList
+
     def rpc_add_bottle_type(self,mfg,liquor,typ):
         returnVal = False
         try:
@@ -258,6 +368,7 @@ alert("That liquor is not an added type.");
         except Exception:
             returnVal = False
         return returnVal
+
     def rpc_add_recipe(self,name,ings):
         myList = ings.split(',')
         myIngSet = set()
@@ -281,36 +392,6 @@ alert("That liquor is not an added type.");
 
     def rpc_add(self, a, b):
         return int(a) + int(b)
-
-    
-
-
-def convertToML():
-    # this sets up jinja2 to load templates from the 'templates' directory
-    loader = jinja2.FileSystemLoader('../drinkz/templates')
-
-    env = jinja2.Environment(loader=loader)
-    # pick up a filename to render
-    filename = "listPages.html"
-    
-    # variables for the template rendering engine
-    vars = dict(title = 'Convert to ML', addtitle = "",
-                form = """<form action='recvAmount'>
-Enter amount(i.e. 11 gallon or 120 oz)<input type='text' name='amount' size'20'>
-<input type='submit'>
-</form>""", names="")
-
-    try:
-        template = env.get_template(filename)
-    except Exception:# for nosetests
-        loader = jinja2.FileSystemLoader('./drinkz/templates')
-        env = jinja2.Environment(loader=loader)
-        template = env.get_template(filename)
-        
-    
-    x = template.render(vars).encode('ascii','ignore')
-
-    return x
 
 def recipesList():
     # this sets up jinja2 to load templates from the 'templates' directory
@@ -372,18 +453,10 @@ Liquor<input type='text' name='liquor' size'20'>
 Amount<input type='text' name='amt' size'20'><p>
 <input type='submit'>
 </form>""", names=inventoryList)
-
     
-    try:
-        template = env.get_template(filename)
-    except Exception:# for nosetests
-        loader = jinja2.FileSystemLoader('./drinkz/templates')
-        env = jinja2.Environment(loader=loader)
-        template = env.get_template(filename)
-        
+    template = env.get_template(filename)
     
-    x = template.render(vars).encode('ascii','ignore')
-
+    x = template.render(vars).encode('ascii','ignore')    
     return x
 
 def liqourTypesList():
@@ -412,26 +485,15 @@ Generic Type<input type='text' name='typ' size'20'><p>
 </form>""", names=liqourTypesList)
 
 
+    template = env.get_template(filename)
     
-    try:
-        template = env.get_template(filename)
-    except Exception:# for nosetests
-        loader = jinja2.FileSystemLoader('./drinkz/templates')
-        env = jinja2.Environment(loader=loader)
-        template = env.get_template(filename)
-        
-    
-    x = template.render(vars).encode('ascii','ignore')
-       
+    x = template.render(vars).encode('ascii','ignore')    
     return x
 
 def setUpWebServer():
-    import random, socket
-    port = random.randint(8000, 9999)
-    filename = 'database'
-
-
+    filename = 'database.db'
     load_db(filename)
+    port = random.randint(8000, 9999)
     
     app = SimpleApp()
     
@@ -440,4 +502,3 @@ def setUpWebServer():
     print "Try using a Web browser to go to http://%s:%d/" % \
           (socket.getfqdn(), port)
     httpd.serve_forever()
-
